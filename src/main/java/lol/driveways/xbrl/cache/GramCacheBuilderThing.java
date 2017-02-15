@@ -13,11 +13,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class GramCache {
+public class GramCacheBuilderThing {
 
     public static void main(final String[] args) {
         System.out.println(args[0]);
-        GramCache cache = new GramCache(args[0]);
+        GramCacheBuilderThing cache = new GramCacheBuilderThing(args[0]);
         CIKReference master = ParseColeft.loadMaster(ParseColeft.getLines(null));
         cache.gramsToDisk(master.getMap());
     }
@@ -25,14 +25,14 @@ public class GramCache {
     private final Path cachePath;
     private final String cache;
 
-    public GramCache(final String outputDir) {
+    public GramCacheBuilderThing(final String outputDir) {
         this.cachePath = Paths.get(outputDir, "cache");
         this.cache = Paths.get(outputDir, "cache").toString();
     }
 
     public void gramsToDisk(final Map<String, Map<Integer, List<Integer>>> grams) {
         grams.keySet().forEach((gram) -> {
-            toDisk(gram, toProto(grams.get(gram)));
+            toDisk(gram, toProto(gram, grams.get(gram)));
         });
     }
 
@@ -46,8 +46,9 @@ public class GramCache {
         }
     }
 
-    private XBRLProto.GramCache toProto(Map<Integer, List<Integer>> scores) {
+    private XBRLProto.GramCache toProto(final String gram, final Map<Integer, List<Integer>> scores) {
         final XBRLProto.GramCache.Builder cache = XBRLProto.GramCache.newBuilder();
+        cache.setGram(gram);
         scores.entrySet().forEach(
                 (entry) -> cache.addScore(
                         XBRLProto.Score.newBuilder()
@@ -68,12 +69,11 @@ public class GramCache {
         return Paths.get(cache, String.format("_%s.gc2", name));
     }
 
-    public Optional<XBRLProto.GramCache> getGram(final String gram) {
+    public Optional<XBRLProto.GramCache> getGramCache(final String gram) {
         try {
             return Optional.of(loadGram(gram));
         } catch (final GramNotFoundException e) {
-//            e.printStackTrace();
-            System.out.println(e.getMessage());
+            System.err.println(e.getMessage());
             return Optional.empty();
         }
     }
@@ -86,8 +86,6 @@ public class GramCache {
         } catch (final IOException e) {
             throw new GramNotFoundException(gram, gramPath, e);
         }
-        System.out.println("gram");
-
         return cacheBuilder.build();
     }
 }

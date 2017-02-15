@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class CIKReference {
@@ -11,12 +12,14 @@ public class CIKReference {
     private final static int minSize = 3;
     private final static int maxSize = 3;
     private String name;
+    private String nameLower;
     private Integer cik;
     private Map<String, Map<Integer, List<Integer>>> selfMap = null;
     private Map<Integer, List<String>> cikNamesMap;
 
     public CIKReference(final String name, final Integer cik) {
         this.name = name;
+        this.nameLower = name.toLowerCase();
         this.cik = cik;
         this.selfMap = new HashMap<>();
         this.cikNamesMap = new HashMap<>();
@@ -76,32 +79,20 @@ public class CIKReference {
     }
 
     public Stream<String> nGrams() {
-        return this.tokens().stream().flatMap((token) -> {
-            if (token.length() < minSize) {
-                return Stream.empty();
-            } else if (token.length() <= maxSize) {
-                return Stream.of(token);
-            } else {
-                final List<String> grams = new ArrayList<>();
-                int start = 0;
-                int end = maxSize;
-                while (end <= token.length()) {
-                    grams.add(token.substring(start, end));
-                    start++;
-                    end++;
-                }
-                return grams.stream();
-            }
-        });
+        return this.tokens()
+                .stream()
+                .flatMap((token) -> IntStream.range(0, token.length() - maxSize + 1)
+                        .mapToObj((start) -> token.substring(start, start + maxSize)));
     }
 
+    final Pattern pattern = Pattern.compile("\\d+|[a-z]+|[/()#$!&%@]+");
+
     public List<String> tokens() {
-        Pattern p = Pattern.compile("\\d+|[a-zA-Z]+|[/()#$!&%@]+");
-//        Pattern p = Pattern.compile("\\S+");
         List<String> l = new ArrayList<>();
-        Matcher matcher = p.matcher(this.name);
+        Matcher matcher = pattern.matcher(nameLower);
+//        matcher.
         while(matcher.find()) {
-            l.add(this.name.substring(matcher.start(), matcher.end()).toLowerCase());
+            l.add(nameLower.substring(matcher.start(), matcher.end()));
         }
         return l;
     }

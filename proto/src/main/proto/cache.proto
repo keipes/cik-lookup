@@ -14,6 +14,7 @@ option java_outer_classname = "XBRLProto";
 
 message GramCache {
     repeated Score score = 1;
+    string gram = 2;
 }
 
 message Score {
