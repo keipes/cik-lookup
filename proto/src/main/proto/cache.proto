@@ -1,0 +1,13 @@
+syntax = "proto3";
+package xbrl;
+
+option java_package = "lol.driveways.xbrl.proto";
+option java_outer_classname = "XBRLProto";
+
+message GramCacheV1 {
+    map<int32, CikList> grams = 1;
+}
+
+message CikList {
+    repeated int32 ciks = 1;
+}
