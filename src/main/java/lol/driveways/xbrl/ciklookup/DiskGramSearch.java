@@ -12,14 +12,19 @@ import static java.lang.System.out;
 
 public class DiskGramSearch implements Search {
 
-    final GramCache gramCache;
+    private final GramCache gramCache;
     private Long prev;
+
+    private Long startTime;
+
     public DiskGramSearch(final String outputdir) {
-        prev = System.currentTimeMillis();
+        startTime = System.currentTimeMillis();
+        prev = startTime;
         bench("load search");
         gramCache = new GramCache(outputdir);
         bench("got gram cache");
     }
+
     private void bench(final String msg) {
         final Long now = System.currentTimeMillis();
         out.println(String.format("%d %s", now - prev, msg));
@@ -33,25 +38,24 @@ public class DiskGramSearch implements Search {
         ConcurrentHashMap<Integer, Integer> scoreMap = new ConcurrentHashMap<>();
         bench("map initialized");
         searchReference.nGrams()
-                .parallel()
+//                .parallel()
                 .map(gramCache::getGram)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .forEach((gc) -> {
+                .forEach((cache) -> {
             bench("start load gram");
-                    gc.getGramsMap().entrySet().forEach((entry) -> {
-                        final Integer score = entry.getKey();
-                        entry.getValue().getCiksList().forEach((cik) -> {
-                            final Integer oldScore = scoreMap.get(cik);
-                            if (oldScore == null) {
-                                scoreMap.put(cik, score);
-                            } else {
-                                scoreMap.put(cik, score + oldScore);
-                            }
-                        });
-                    });
-                    bench("gram loaded");
+            cache.getScoreList().forEach((score) -> {
+                score.getCikList().forEach((cik) -> {
+                    final Integer oldScore = scoreMap.get(cik);
+                    if (oldScore == null) {
+                        scoreMap.put(cik, score.getScore());
+                    } else {
+                        scoreMap.put(cik, score.getScore() + oldScore);
+                    }
                 });
+            });
+            bench("gram loaded");
+        });
         bench("map built");
         final List<CIKScore> scores = scoreMap.entrySet().stream()
                 .map((entry) -> {
@@ -61,8 +65,9 @@ public class DiskGramSearch implements Search {
                 })
                 .collect(Collectors.toList());
         bench("to CIK score");
-//        Collections.sort(scores);
+        Collections.sort(scores);
         bench("sorted");
+        System.out.println(String.format("total: %d", System.currentTimeMillis() - startTime));
         return scores.stream()
                 .limit(numResults)
                 .collect(Collectors.toList());

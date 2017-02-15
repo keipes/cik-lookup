@@ -4,7 +4,6 @@ import lol.driveways.xbrl.ParseColeft;
 import lol.driveways.xbrl.exceptions.GramNotFoundException;
 import lol.driveways.xbrl.model.CIKReference;
 import lol.driveways.xbrl.proto.XBRLProto;
-import lol.driveways.xbrl.proto.XBRLProto.CikList;
 
 import java.io.*;
 import java.net.URLEncoder;
@@ -37,7 +36,7 @@ public class GramCache {
         });
     }
 
-    private void toDisk(final String gram, final XBRLProto.GramCacheV1 cache) {
+    private void toDisk(final String gram, final XBRLProto.GramCache cache) {
         try {
             try (FileOutputStream out = new FileOutputStream(String.valueOf(gramPath(gram)))) {
                 cache.writeTo(out);
@@ -47,12 +46,13 @@ public class GramCache {
         }
     }
 
-    private XBRLProto.GramCacheV1 toProto(Map<Integer, List<Integer>> scores) {
-        final XBRLProto.GramCacheV1.Builder cache = XBRLProto.GramCacheV1.newBuilder();
+    private XBRLProto.GramCache toProto(Map<Integer, List<Integer>> scores) {
+        final XBRLProto.GramCache.Builder cache = XBRLProto.GramCache.newBuilder();
         scores.entrySet().forEach(
-                (entry) -> cache.putGrams(
-                        entry.getKey(),
-                        CikList.newBuilder().addAllCiks(entry.getValue()).build()
+                (entry) -> cache.addScore(
+                        XBRLProto.Score.newBuilder()
+                                .setScore(entry.getKey())
+                                .addAllCik(entry.getValue()).build()
                 )
         );
         return cache.build();
@@ -65,20 +65,21 @@ public class GramCache {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-        return Paths.get(cache, String.format("_%s.gc1", name));
+        return Paths.get(cache, String.format("_%s.gc2", name));
     }
 
-    public Optional<XBRLProto.GramCacheV1> getGram(final String gram) {
+    public Optional<XBRLProto.GramCache> getGram(final String gram) {
         try {
             return Optional.of(loadGram(gram));
         } catch (final GramNotFoundException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
+            System.out.println(e.getMessage());
             return Optional.empty();
         }
     }
 
-    private XBRLProto.GramCacheV1 loadGram(final String gram) throws GramNotFoundException {
-        final XBRLProto.GramCacheV1.Builder cacheBuilder = XBRLProto.GramCacheV1.newBuilder();
+    private XBRLProto.GramCache loadGram(final String gram) throws GramNotFoundException {
+        final XBRLProto.GramCache.Builder cacheBuilder = XBRLProto.GramCache.newBuilder();
         final String gramPath = String.valueOf(gramPath(gram));
         try (FileInputStream fIn = new FileInputStream(gramPath)) {
             cacheBuilder.mergeFrom(fIn);
