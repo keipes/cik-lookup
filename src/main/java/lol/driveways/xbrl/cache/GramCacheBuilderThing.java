@@ -18,22 +18,18 @@ public class GramCacheBuilderThing {
     public static void main(final String[] args) {
         System.out.println(args[0]);
         GramCacheBuilderThing cache = new GramCacheBuilderThing(args[0]);
-        CIKReference master = ParseColeft.loadMaster(ParseColeft.getLines(null));
+        CIKReference master = ParseColeft.loadMaster(ParseColeft.getLines());
         cache.gramsToDisk(master.getMap());
     }
 
-    private final Path cachePath;
     private final String cache;
 
     public GramCacheBuilderThing(final String outputDir) {
-        this.cachePath = Paths.get(outputDir, "cache");
         this.cache = Paths.get(outputDir, "cache").toString();
     }
 
-    public void gramsToDisk(final Map<String, Map<Integer, List<Integer>>> grams) {
-        grams.keySet().forEach((gram) -> {
-            toDisk(gram, toProto(gram, grams.get(gram)));
-        });
+    private void gramsToDisk(final Map<String, Map<Integer, List<Integer>>> grams) {
+        grams.keySet().forEach((gram) -> toDisk(gram, toProto(gram, grams.get(gram))));
     }
 
     private void toDisk(final String gram, final XBRLProto.GramCache cache) {

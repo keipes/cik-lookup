@@ -18,10 +18,6 @@ public class CIKScore implements Comparable<CIKScore> {
         return score;
     }
 
-    public void addScore(final Integer score) {
-        this.score = this.score + score;
-    }
-
     @Override
     public int compareTo(final CIKScore o) {
         return o.score.compareTo(this.score);//this.score.compareTo(o.score);

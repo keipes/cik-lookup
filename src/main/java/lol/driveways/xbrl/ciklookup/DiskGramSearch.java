@@ -35,10 +35,6 @@ public class DiskGramSearch implements Search {
         prev = now;
     }
 
-//    private void absoluteBench(final String msg) {
-//        final Long now = System.currentTimeMillis();
-//        out.println(String.format("%d %s (absolute)", now - startTime, msg));
-//    }
     @Override
     public List<CIKScore> search(final String query, final Long numResults) {
         bench("start");
@@ -59,16 +55,14 @@ public class DiskGramSearch implements Search {
         });
         bench("grams filtered");
         final Set<String> gramSet = gramFrequency.keySet();
-        final ForkJoinPool pool = new ForkJoinPool(gramSet.size());
+        final ForkJoinPool pool = new ForkJoinPool(1);
         try {
-            pool.submit(() -> {
-                gramSet.stream()
-                        .parallel()
-                        .map(gramCacheBuilderThing::getGramCache)
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .forEach((cache) -> processCache(scoreMap, cache, gramFrequency.get(cache.getGram())));
-            }).get();
+            pool.submit(() -> gramSet.stream()
+                    .parallel()
+                    .map(gramCacheBuilderThing::getGramCache)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .forEach((cache) -> processCache(scoreMap, cache, gramFrequency.get(cache.getGram())))).get();
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
@@ -92,17 +86,15 @@ public class DiskGramSearch implements Search {
 
     private void processCache(final ConcurrentHashMap<Integer, Integer> scoreMap, final XBRLProto.GramCache cache, final Integer gramFrequency) {
         bench(cache.getGram());
-        cache.getScoreList().forEach((score) -> {
-            score.getCikList().forEach((cik) -> {
-                final Integer addScore = score.getScore() * gramFrequency;
-                scoreMap.compute(cik, (key, oldScore) -> {
-                    if (oldScore == null) {
-                        return addScore;
-                    } else {
-                        return oldScore + addScore;
-                    }
-                });
+        cache.getScoreList().forEach((score) -> score.getCikList().forEach((cik) -> {
+            final Integer addScore = score.getScore() * gramFrequency;
+            scoreMap.compute(cik, (key, oldScore) -> {
+                if (oldScore == null) {
+                    return addScore;
+                } else {
+                    return oldScore + addScore;
+                }
             });
-        });
+        }));
     }
 }
