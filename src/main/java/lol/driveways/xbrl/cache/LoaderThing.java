@@ -31,12 +31,7 @@ public class LoaderThing {
     public XBRLProto.NameCache getNamesCache(final Integer cik) {
         final XBRLProto.NameCache.Builder cacheBuilder = XBRLProto.NameCache.newBuilder();
         final String cachePath = this.cachePath + "/" + Common.bucketKey(cik);
-        try (final BufferedInputStream in = (BufferedInputStream) LoaderThing.class.getResourceAsStream(cachePath)) {
-            if (in.available() == 0) {
-                System.out.println(cachePath);
-            }
-            System.out.println(cachePath);
-
+        try (final InputStream in = LoaderThing.class.getResourceAsStream(cachePath)) {
             cacheBuilder.mergeFrom(in);
         } catch (final IOException e) {
             e.printStackTrace();
@@ -52,7 +47,7 @@ public class LoaderThing {
 
     private XBRLProto.GramBucket loadBucket(final String bucketPath) {
         final XBRLProto.GramBucket.Builder cacheBuilder = XBRLProto.GramBucket.newBuilder();
-        try (final BufferedInputStream in = (BufferedInputStream) LoaderThing.class.getResourceAsStream(bucketPath)) {
+        try (final InputStream in = LoaderThing.class.getResourceAsStream(bucketPath)) {
             cacheBuilder.mergeFrom(in);
         } catch (final IOException e) {
             e.printStackTrace();

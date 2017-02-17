@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 
 public class ParseColeft {
 
-    private static final String COLEFT = "/cik.coleft.c";
+    private static final String COLEFT = "/coleft/cik.coleft.c";
 
     public static Stream<String> getLines() {
         InputStream coleft = ParseColeft.class.getResourceAsStream(COLEFT);
