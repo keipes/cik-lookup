@@ -17,6 +17,8 @@ import static java.lang.System.out;
 public class DiskGramSearch implements Search {
 
     private final GramCacheBuilderThing gramCacheBuilderThing;
+//    private Map<Integer, List<String>> nameCache = null;
+    private XBRLProto.NameCache nameCache = null;
     private Long prev;
 
     private Long startTime;
@@ -33,6 +35,14 @@ public class DiskGramSearch implements Search {
         final Long now = System.currentTimeMillis();
         out.println(String.format("%d %d %s", now - startTime, now - prev, msg));
         prev = now;
+    }
+
+
+    public XBRLProto.Names knownNames(final Integer cik) {
+        if (this.nameCache == null) {
+            this.nameCache = gramCacheBuilderThing.getNamesCache();
+        }
+        return this.nameCache.getNameMapOrDefault(cik, XBRLProto.Names.getDefaultInstance());
     }
 
     @Override
@@ -72,7 +82,7 @@ public class DiskGramSearch implements Search {
         final List<CIKScore> scores = scoreMap.entrySet().stream()
                 .map((entry) -> {
                     final Integer cik = entry.getKey();
-                    final float score = (float) entry.getValue();// / this.knownNames(cik).size();
+                    final float score = (float) entry.getValue() / this.knownNames(cik).getNameCount();
                     return new CIKScore(cik, score);
                 })
                 .collect(Collectors.toList());

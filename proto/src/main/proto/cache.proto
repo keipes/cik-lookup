@@ -4,14 +4,6 @@ package xbrl;
 option java_package = "lol.driveways.xbrl.proto";
 option java_outer_classname = "XBRLProto";
 
-//message GramCacheV1 {
-//    map<int32, CikList> grams = 1;
-//}
-//
-//message CikList {
-//    repeated int32 ciks = 1;
-//}
-
 message GramCache {
     repeated Score score = 1;
     string gram = 2;
@@ -20,4 +12,12 @@ message GramCache {
 message Score {
     repeated int32 cik = 1;
     int32 score = 2;
+}
+
+message NameCache {
+    map<int32, Names> nameMap = 1;
+}
+
+message Names {
+    repeated string name = 1;
 }

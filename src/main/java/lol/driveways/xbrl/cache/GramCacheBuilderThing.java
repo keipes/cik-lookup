@@ -19,13 +19,17 @@ public class GramCacheBuilderThing {
         System.out.println(args[0]);
         GramCacheBuilderThing cache = new GramCacheBuilderThing(args[0]);
         CIKReference master = ParseColeft.loadMaster(ParseColeft.getLines());
-        cache.gramsToDisk(master.getMap());
+//        Map<String, Map<Integer, List<Integer>>> map = master.getMap();
+//        cache.gramsToDisk(master.getMap());
+        cache.namesToDisk(master.knownNames());
     }
 
     private final String cache;
+    private final String knownNames;
 
     public GramCacheBuilderThing(final String outputDir) {
         this.cache = Paths.get(outputDir, "cache").toString();
+        this.knownNames = Paths.get(this.cache, "knownNames.nc").toString();
     }
 
     private void gramsToDisk(final Map<String, Map<Integer, List<Integer>>> grams) {
@@ -63,6 +67,37 @@ public class GramCacheBuilderThing {
             e.printStackTrace();
         }
         return Paths.get(cache, String.format("_%s.gc2", name));
+    }
+
+    private void namesToDisk(final Map<Integer, List<String>> knownNames) {
+        XBRLProto.NameCache cache = toNameCache(knownNames);
+        try {
+            try (FileOutputStream out = new FileOutputStream(this.knownNames)) {
+                cache.writeTo(out);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private XBRLProto.NameCache toNameCache(final Map<Integer, List<String>> knownNames) {
+        final XBRLProto.NameCache.Builder builder = XBRLProto.NameCache.newBuilder();
+        knownNames.entrySet().forEach(entry -> builder.putNameMap(entry.getKey(), toNames(entry.getValue())));
+        return builder.build();
+    }
+
+    private XBRLProto.Names toNames(final List<String> names) {
+        return XBRLProto.Names.newBuilder().addAllName(names).build();
+    }
+
+    public XBRLProto.NameCache getNamesCache() {
+        final XBRLProto.NameCache.Builder cacheBuilder = XBRLProto.NameCache.newBuilder();
+        try (FileInputStream fIn = new FileInputStream(knownNames)) {
+            cacheBuilder.mergeFrom(fIn);
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
+        return cacheBuilder.build();
     }
 
     public Optional<XBRLProto.GramCache> getGramCache(final String gram) {

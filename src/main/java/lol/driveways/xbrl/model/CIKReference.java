@@ -37,9 +37,9 @@ public class CIKReference {
         return this.name;
     }
 
-//    public List<String> knownNames(final Integer cik) {
-//        return this.cikNamesMap.get(cik);
-//    }
+    public Map<Integer, List<String>> knownNames() {
+        return this.cikNamesMap;
+    }
 
     private void addScore(final String gram, final Integer score, final Integer cik) {
         if (!selfMap.containsKey(gram)) {
