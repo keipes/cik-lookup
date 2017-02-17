@@ -14,9 +14,7 @@ CIK: 1000000000
 Name: foo.com
 CIK: 1000000047
 ```
-Each company name is split into tokens, and n-grams are built from the name:
-
-
+The company name is split into tokens:
 ```
 tokens("ACME Bread Company.com")
 ["acme", "bread", "company", ".", "com"]
