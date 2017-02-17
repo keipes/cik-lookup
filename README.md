@@ -2,7 +2,23 @@
 This is a Java function for AWS Lambda.
 
 It indexes the Central Index Key (CIK) reference file published by the SEC and performs a fuzzy-search against the published company names.
+## Lambda
+Still a work in progress, this is what the interface looks like today:
 
+### Handler
+```
+lol.driveways.xbrl.CIKLookup::lambdaHandler
+```
+### Input
+```
+google inc
+```
+### Output
+A company may file under multiple CIKs with the same name.
+```
+"5.0 GOOGLE INC\n5.0 GOOGLE TECHNOLOGY INC\n5.0 GOOGLE INC.\n5.0 GOOGLE INC\n4.0 GOOGLE VENTURES 2011, L.P.\n4.0 AZOOGLE COM INC\n4.0 GOOGLE VENTURES 2011 GP, L.L.C.\n4.0 GOOGOOROO, INC.\n4.0 GIFT BOOGLE, INC.\n3.0 OGLEBAY NORTON ENGINEERED MATERIALS INC"
+
+```
 ## Search
 This is an [n-gram](https://en.wikipedia.org/wiki/N-gram) based search.
 ### Index
@@ -56,6 +72,14 @@ This is map, along with the company's CIK are combined into a master map of `{gr
   ...
 }
 ```
+## Cache
+To speed up the process the Index is pre-computed and stored in index files.
+```
+/cache/_acm.gc
+/cache/_cme.gc
+...
+```
+The grams are stored as serialized Protobuf messages. Only those cache files which match grams found in the query will be loaded. In this example that would be `/cache/_\..gc` and `/cache/_com.gc`.
 ## Query
 ```
 query: acme.com
@@ -65,7 +89,10 @@ The query string is split into n-grams:
 ngrams(tokens("acme.com"))
 [".", "com"]
 ```
-For each gram, the mapping `{score: [cik]}` mapping is retrieved from the index `index[gram]`, and the sum total of each CIKs appearance in all gram indexes is computed. This result is then sorted and returned:
+For each gram, the mapping `{score: [cik]}` mapping is retrieved from the index `index[gram]`, and the sum total of each CIKs appearance in all gram indexes is computed. This list is sorted by score to retrieve the final result.
+## Names
+Company names are stored in a separate index, this storage still isn't efficient and needs to be sharded across the int range of CIKs.
+## Result
 ```
 {
   name: ACME Bread Company.com,
@@ -78,11 +105,4 @@ For each gram, the mapping `{score: [cik]}` mapping is retrieved from the index 
   score: 2
 }
 ```
-## Cache
-To speed up the process the Index is pre-computed and stored in index files.
-```
-/cache/_acm.gc
-/cache/_cme.gc
-...
-```
-The grams are stored as serialized Protobuf messages. Only those cache files which match grams found in the query will be loaded. In this example that would be `/cache/_\..gc` and `/cache/_com.gc`.
+
