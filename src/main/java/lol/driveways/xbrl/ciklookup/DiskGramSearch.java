@@ -1,6 +1,6 @@
 package lol.driveways.xbrl.ciklookup;
 
-import lol.driveways.xbrl.cache.GramCacheBuilderThing;
+import lol.driveways.xbrl.cache.LoaderThing;
 import lol.driveways.xbrl.model.CIKReference;
 import lol.driveways.xbrl.model.CIKScore;
 import lol.driveways.xbrl.proto.XBRLProto;
@@ -16,18 +16,17 @@ import static java.lang.System.out;
 
 public class DiskGramSearch implements Search {
 
-    private final GramCacheBuilderThing gramCacheBuilderThing;
-//    private Map<Integer, List<String>> nameCache = null;
+    private final LoaderThing loaderThing;
     private XBRLProto.NameCache nameCache = null;
     private Long prev;
 
     private Long startTime;
 
-    public DiskGramSearch(final String outputdir) {
+    public DiskGramSearch() {
         startTime = System.currentTimeMillis();
         prev = startTime;
         bench("load search");
-        gramCacheBuilderThing = new GramCacheBuilderThing(outputdir);
+        loaderThing = new LoaderThing();
         bench("got gram cache");
     }
 
@@ -40,7 +39,7 @@ public class DiskGramSearch implements Search {
 
     public XBRLProto.Names knownNames(final Integer cik) {
         if (this.nameCache == null) {
-            this.nameCache = gramCacheBuilderThing.getNamesCache();
+            this.nameCache = loaderThing.getNamesCache();
         }
         return this.nameCache.getNameMapOrDefault(cik, XBRLProto.Names.getDefaultInstance());
     }
@@ -49,11 +48,10 @@ public class DiskGramSearch implements Search {
     public List<CIKScore> search(final String query, final Long numResults) {
         bench("start");
         final CIKReference searchReference = new CIKReference(query, 0);
-        ConcurrentHashMap<Integer, Integer> scoreMap = new ConcurrentHashMap<>();
+        final ConcurrentHashMap<Integer, Integer> scoreMap = new ConcurrentHashMap<>();
         bench("map initialized");
-        Map<String, Integer> gramFrequency = new HashMap<>();
-//        searchReference.nGrams();
-        Stream<String> grams = searchReference.nGrams();
+        final Map<String, Integer> gramFrequency = new HashMap<>();
+        final Stream<String> grams = searchReference.nGrams();
         bench("got grams");
         grams.forEach((gram) -> {
             final Integer old = gramFrequency.get(gram);
@@ -69,7 +67,7 @@ public class DiskGramSearch implements Search {
         try {
             pool.submit(() -> gramSet.stream()
                     .parallel()
-                    .map(gramCacheBuilderThing::getGramCache)
+                    .map(loaderThing::getGramCache)
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .forEach((cache) -> processCache(scoreMap, cache, gramFrequency.get(cache.getGram())))).get();

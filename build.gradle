@@ -15,27 +15,27 @@ repositories {
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.11'
-    // https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java
     compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.1.0'
+    compile group: 'com.amazonaws', name: 'aws-lambda-java-core', version: '1.1.0'
     compile project(':proto')
-//    compile files('proto/build/libs')
-//    compile fileTree(dir: 'proto/build/libs', include: ['*.jar'])
 }
 
 task generateCache(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-
     main = 'lol.driveways.xbrl.cache.GramCacheBuilderThing'
-
     // arguments to pass to the application
-    args "$buildDir"
+    args "$projectDir/src/main/resources/"
 }
 
 jar {
     manifest {
         attributes 'Main-Class': 'lol.driveways.xbrl.CIKLookup'
     }
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
 }
+
 repositories {
     flatDir {
         dirs 'libs'
