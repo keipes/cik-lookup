@@ -22,7 +22,7 @@ dependencies {
 
 task generateCache(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'lol.driveways.xbrl.cache.GramCacheBuilderThing'
+    main = 'lol.driveways.xbrl.cache.BuilderThing'
     // arguments to pass to the application
     args "$projectDir/src/main/resources/"
 }
