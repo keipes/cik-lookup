@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 public class CIKReference {
 
     private final static int maxSize = 3;
+    private static final boolean NO_DUPLICATES = true;
     private String name;
     private String nameLower;
     private Integer cik;
@@ -55,14 +56,16 @@ public class CIKReference {
     }
 
     public void merge(final CIKReference next) {
-        this.cikNamesMap.computeIfAbsent(next.getCik(), k -> new ArrayList<>());
-        this.cikNamesMap.get(next.getCik()).add(next.getName());
-        next.nGramScores().entrySet().forEach((entry) -> {
-            final String gram = entry.getKey();
-            final Integer score = entry.getValue();
-            final Integer cik = next.getCik();
-            addScore(gram, score, cik);
-        });
+        if (!(this.cikNamesMap.containsKey(next.getCik()) && NO_DUPLICATES)) {
+            this.cikNamesMap.computeIfAbsent(next.getCik(), k -> new ArrayList<>());
+            this.cikNamesMap.get(next.getCik()).add(next.getName());
+            next.nGramScores().entrySet().forEach((entry) -> {
+                final String gram = entry.getKey();
+                final Integer score = entry.getValue();
+                final Integer cik = next.getCik();
+                addScore(gram, score, cik);
+            });
+        }
     }
 
     private Map<String, Integer> nGramScores() {

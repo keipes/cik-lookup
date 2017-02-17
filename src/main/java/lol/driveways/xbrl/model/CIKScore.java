@@ -20,7 +20,7 @@ public class CIKScore implements Comparable<CIKScore> {
 
     @Override
     public int compareTo(final CIKScore o) {
-        return o.score.compareTo(this.score);//this.score.compareTo(o.score);
+        return o.score.compareTo(this.score);
     }
 
     public String toString() {

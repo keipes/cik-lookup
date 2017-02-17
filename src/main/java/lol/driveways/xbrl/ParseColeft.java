@@ -21,7 +21,7 @@ public class ParseColeft {
         return lines.map(ParseColeft::lineToCik)
                 .reduce(null, (cumulative, next) -> {
                     if (cumulative == null) {
-                        cumulative = new CIKReference("", 0);
+                        cumulative = new CIKReference("", -1);
                     }
                     cumulative.merge(next);
                     return cumulative;

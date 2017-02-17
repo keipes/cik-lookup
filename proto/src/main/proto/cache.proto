@@ -4,6 +4,9 @@ package xbrl;
 option java_package = "lol.driveways.xbrl.proto";
 option java_outer_classname = "XBRLProto";
 
+message GramBucket {
+    map<string, GramCache> gramCache = 1;
+}
 message GramCache {
     repeated Score score = 1;
     string gram = 2;

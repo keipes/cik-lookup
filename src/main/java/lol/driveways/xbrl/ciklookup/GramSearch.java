@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 
 import static java.lang.System.out;
 
-public class DiskGramSearch implements Search {
+public class GramSearch implements Search {
 
     private final LoaderThing loaderThing;
     private XBRLProto.NameCache nameCache = null;
@@ -22,7 +22,7 @@ public class DiskGramSearch implements Search {
 
     private Long startTime;
 
-    public DiskGramSearch() {
+    public GramSearch() {
         startTime = System.currentTimeMillis();
         prev = startTime;
         bench("load search");
@@ -38,10 +38,11 @@ public class DiskGramSearch implements Search {
 
 
     public XBRLProto.Names knownNames(final Integer cik) {
-        if (this.nameCache == null) {
-            this.nameCache = loaderThing.getNamesCache();
-        }
-        return this.nameCache.getNameMapOrDefault(cik, XBRLProto.Names.getDefaultInstance());
+        return loaderThing.getNamesCacheMemoized(cik).getNameMapOrDefault(cik, XBRLProto.Names.getDefaultInstance());
+//        if (this.nameCache == null) {
+//            this.nameCache = loaderThing.getNamesCache(cik);
+//        }
+//        return this.nameCache.getNameMapOrDefault(cik, XBRLProto.Names.getDefaultInstance());
     }
 
     @Override
@@ -66,10 +67,10 @@ public class DiskGramSearch implements Search {
         final ForkJoinPool pool = new ForkJoinPool(1);
         try {
             pool.submit(() -> gramSet.stream()
-                    .parallel()
-                    .map(loaderThing::getGramCache)
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
+//                    .parallel()
+                    .map(loaderThing::getGramCacheMemoized)
+//                    .filter(Optional::isPresent)
+//                    .map(Optional::get)
                     .forEach((cache) -> processCache(scoreMap, cache, gramFrequency.get(cache.getGram())))).get();
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
@@ -80,7 +81,7 @@ public class DiskGramSearch implements Search {
         final List<CIKScore> scores = scoreMap.entrySet().stream()
                 .map((entry) -> {
                     final Integer cik = entry.getKey();
-                    final float score = (float) entry.getValue() / this.knownNames(cik).getNumNames();
+                    final float score = entry.getValue(); //(float) entry.getValue() / this.knownNames(cik).getNumNames();
                     return new CIKScore(cik, score);
                 })
                 .collect(Collectors.toList());
@@ -90,6 +91,47 @@ public class DiskGramSearch implements Search {
         return scores.stream()
                 .limit(numResults)
                 .collect(Collectors.toList());
+    }
+
+    private class SortableThing implements Comparable<SortableThing> {
+        private Integer score;
+        private Integer cik;
+
+        SortableThing(Integer score, Integer cik) {
+            this.score = score;
+            this.cik = cik;
+        }
+
+        Integer getScore() {
+            return score;
+        }
+
+        public Integer getCik() {
+            return cik;
+        }
+
+        @Override
+        public int compareTo(final SortableThing other) {
+            return other.score - this.score;
+        }
+    }
+
+    private PriorityQueue<SortableThing> topScores(final Map<Integer, Integer> scoreMap, final Integer maxScores) {
+        final PriorityQueue<SortableThing> scores = new PriorityQueue<>();
+        scoreMap.entrySet().forEach((entry) -> {
+            final SortableThing score = new SortableThing(entry.getKey(), entry.getValue());
+            while (scores.size() >= maxScores) {
+                if (scores.peek().getScore()  < score.getScore()) {
+                    scores.poll();
+                    if (scores.offer(score)) {
+
+                    } else {
+                        System.err.println(score.cik);
+                    }
+                }
+            }
+        });
+        return scores;
     }
 
     private void processCache(final ConcurrentHashMap<Integer, Integer> scoreMap, final XBRLProto.GramCache cache, final Integer gramFrequency) {
