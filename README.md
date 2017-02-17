@@ -87,4 +87,4 @@ To speed up the process the Index is pre-computed and stored in index files.
 /cache/_cme.gc
 ...
 ```
-The grams are stored as serialized Protobuf messages. Splitting the cache by gram allows the search to load only those grams which were present in the query. In this case only `/cache/_\..gc` and `/cache/_com.gc` would have been loaded.
+The grams are stored as serialized Protobuf messages. Only those cache files which match grams found in the query will be loaded. In this example that would be `/cache/_\..gc` and `/cache/_com.gc`.
