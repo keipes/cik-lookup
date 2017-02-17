@@ -19,5 +19,7 @@ message NameCache {
 }
 
 message Names {
-    repeated string name = 1;
+    string name = 1;
+    int32 numNames = 2;
+//    repeated string name = 1;
 }

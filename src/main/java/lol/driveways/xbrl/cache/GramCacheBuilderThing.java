@@ -87,7 +87,7 @@ public class GramCacheBuilderThing {
     }
 
     private XBRLProto.Names toNames(final List<String> names) {
-        return XBRLProto.Names.newBuilder().addAllName(names).build();
+        return XBRLProto.Names.newBuilder().setName(names.get(0)).setNumNames(names.size()).build();
     }
 
     public XBRLProto.NameCache getNamesCache() {

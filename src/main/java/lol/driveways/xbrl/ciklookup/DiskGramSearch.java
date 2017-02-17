@@ -82,7 +82,7 @@ public class DiskGramSearch implements Search {
         final List<CIKScore> scores = scoreMap.entrySet().stream()
                 .map((entry) -> {
                     final Integer cik = entry.getKey();
-                    final float score = (float) entry.getValue() / this.knownNames(cik).getNameCount();
+                    final float score = (float) entry.getValue() / this.knownNames(cik).getNumNames();
                     return new CIKScore(cik, score);
                 })
                 .collect(Collectors.toList());
