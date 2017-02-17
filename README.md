@@ -67,7 +67,7 @@ The query string is split into n-grams:
 ngrams(tokens("acme.com"))
 [".", "com"]
 ```
-The mapping {score: [cik]} `index[gram]` is retrieved for each gram, and the sum total of each CIKs appearance in all gram indexes is computed. This result is then sorted and returned:
+For each gram, the mapping `{score: [cik]}` mapping is retrieved from the index `index[gram]`, and the sum total of each CIKs appearance in all gram indexes is computed. This result is then sorted and returned:
 ```
 {
   name: ACME Bread Company.com,
@@ -80,3 +80,11 @@ The mapping {score: [cik]} `index[gram]` is retrieved for each gram, and the sum
   score: 2
 }
 ```
+## Cache
+To speed up the process the Index is pre-computed and stored in index files.
+```
+/cache/_acm.gc
+/cache/_cme.gc
+...
+```
+The grams are stored as serialized Protobuf messages. Splitting the cache by gram allows the search to load only those grams which were present in the query. In this case only `/cache/_\..gc` and `/cache/_com.gc` would have been loaded.
