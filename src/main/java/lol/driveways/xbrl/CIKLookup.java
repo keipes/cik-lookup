@@ -2,7 +2,7 @@ package lol.driveways.xbrl;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
-import lol.driveways.xbrl.ciklookup.GramSearchV2;
+import lol.driveways.xbrl.ciklookup.GramSearch;
 import lol.driveways.xbrl.ciklookup.Search;
 import lol.driveways.xbrl.model.LambdaQuery;
 import lol.driveways.xbrl.model.LambdaResponse;
@@ -38,7 +38,7 @@ public class CIKLookup implements RequestHandler<LambdaQuery, LambdaResponse> {
     @Override
     public LambdaResponse handleRequest(final LambdaQuery input, final Context context) {
         log.info("request start");
-        final Search search = new GramSearchV2();
+        final Search search = new GramSearch();
         final List<LambdaResult> results = new ArrayList<>();
         search.search(input.getQuery(), input.getLimit()).forEach((cikScore) -> {
             final LambdaResult result = new LambdaResult();
