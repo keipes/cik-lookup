@@ -3,6 +3,7 @@ package lol.driveways.xbrl.ciklookup;
 import lol.driveways.xbrl.cache.LoaderThing;
 import lol.driveways.xbrl.model.CIKReference;
 import lol.driveways.xbrl.model.CIKScore;
+import lol.driveways.xbrl.model.NGramBuilder;
 import lol.driveways.xbrl.proto.XBRLProto;
 import org.apache.log4j.Logger;
 
@@ -13,14 +14,11 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.lang.System.out;
-
 public class GramSearch implements Search {
 
     private static final Logger log = Logger.getLogger(GramSearch.class);
 
     private final LoaderThing loaderThing;
-    private XBRLProto.NameCache nameCache = null;
     private Long prev;
 
     private Long startTime;
@@ -50,33 +48,28 @@ public class GramSearch implements Search {
     @Override
     public List<CIKScore> search(final String query, final Long numResults) {
         log.info("query: " + query + " limit: " + numResults);
-        final CIKReference searchReference = new CIKReference(query, 0);
+//        final CIKReference searchReference = new CIKReference(query, 0);
         final ConcurrentHashMap<Integer, Integer> scoreMap = new ConcurrentHashMap<>();
-        final Map<String, Integer> gramFrequency = new HashMap<>();
-        final Stream<String> grams = searchReference.nGrams();
+        final Stream<String> nGrams = NGramBuilder.nGrams(query);
+        final Map<String, Integer> gramFrequency = Common.scoreMap(nGrams);
         bench("got grams");
-        grams.forEach((gram) -> {
-            final Integer old = gramFrequency.get(gram);
-            if (old == null) {
-                gramFrequency.put(gram, 1);
-            } else {
-                gramFrequency.put(gram, old + 1);
-            }
-        });
         bench("grams filtered");
         final Set<String> gramSet = gramFrequency.keySet();
-        final ForkJoinPool pool = new ForkJoinPool(1);
-        try {
-            pool.submit(() -> gramSet.stream()
-//                    .parallel()
-                    .map(loaderThing::getGramCacheMemoized)
-//                    .filter(Optional::isPresent)
-//                    .map(Optional::get)
-                    .forEach((cache) -> processCache(scoreMap, cache, gramFrequency.get(cache.getGram())))).get();
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-        pool.shutdown();
+//        final ForkJoinPool pool = new ForkJoinPool(gramSet.size());
+        gramSet.stream()
+                .map(loaderThing::getGramCacheMemoized)
+                .forEach((cache) -> processCache(scoreMap, cache, gramFrequency.get(cache.getGram())));
+//        try {
+//            pool.submit(() -> gramSet.stream()
+////                    .parallel()
+//                    .map(loaderThing::getGramCacheMemoized)
+////                    .filter(Optional::isPresent)
+////                    .map(Optional::get)
+//                    .forEach((cache) -> processCache(scoreMap, cache, gramFrequency.get(cache.getGram())))).get();
+//        } catch (InterruptedException | ExecutionException e) {
+//            e.printStackTrace();
+//        }
+//        pool.shutdown();
 
         bench("map built");
         final List<CIKScore> scores = scoreMap.entrySet().stream()

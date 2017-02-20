@@ -4,8 +4,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
 class Common {
-    private static final Integer NUM_CHUNKS = 100;
-    private static final Integer NUM_GRAM_CHUNKS = 100;
+    private static final Integer NUM_CHUNKS = 1000;
+    private static final Integer NUM_GRAM_CHUNKS = 1000;
 
     static String bucketKey(final Integer cik) {
         return cik % NUM_CHUNKS + ".nc";

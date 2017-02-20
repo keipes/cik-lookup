@@ -9,7 +9,6 @@ import java.util.stream.Stream;
 
 public class CIKReference {
 
-    private final static int maxSize = 3;
     private static final boolean NO_DUPLICATES = true;
     private String name;
     private String nameLower;
@@ -70,7 +69,7 @@ public class CIKReference {
 
     private Map<String, Integer> nGramScores() {
         final Map<String, Integer> scores = new HashMap<>();
-        this.nGrams().forEach((gram) -> {
+        NGramBuilder.nGrams(this.getName()).forEach((gram) -> {
             if (scores.containsKey(gram)) {
                 scores.put(gram, scores.get(gram) + 1);
             } else {
@@ -79,31 +78,10 @@ public class CIKReference {
         });
         return scores;
     }
-
-    public Stream<String> nGrams() {
-        return this.tokens()
-                .stream()
-                .flatMap((token) -> IntStream.range(0, token.length() - maxSize + 1)
-                        .mapToObj((start) -> token.substring(start, start + maxSize)));
-    }
-
-    private final Pattern pattern = Pattern.compile("\\d+|[a-z]+|[/()#$!&%@]+");
-
-    private List<String> tokens() {
-        List<String> l = new ArrayList<>();
-        Matcher matcher = pattern.matcher(nameLower);
-//        matcher.
-        while(matcher.find()) {
-            l.add(nameLower.substring(matcher.start(), matcher.end()));
-        }
-        return l;
-    }
-
     public String toString() {
         Map<String, Map<Integer, List<Integer>>> data = getMap();
         return this.name + " " + this.cik + '\n' +
-                '\t' + this.tokens().stream().collect(Collectors.joining(",")) + '\n' +
-                '\t' + this.nGrams().collect(Collectors.joining(",")) + '\n' +
+                '\t' + NGramBuilder.nGrams(this.getName()).collect(Collectors.joining(",")) + '\n' +
                 data.keySet().stream().map(
                         (gram) -> gram + "\n" + data.get(gram).entrySet().stream().map(
                                 (e) -> "" + e.getKey() + " : " + e.getValue() + '\n'

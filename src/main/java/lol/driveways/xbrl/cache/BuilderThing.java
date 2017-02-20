@@ -1,12 +1,8 @@
 package lol.driveways.xbrl.cache;
 
-import com.google.protobuf.Any;
-import com.google.protobuf.AnyOrBuilder;
 import com.google.protobuf.Message;
-import lol.driveways.xbrl.ParseColeft;
-import lol.driveways.xbrl.exceptions.GramNotFoundException;
-import lol.driveways.xbrl.model.CIKReference;
 import lol.driveways.xbrl.proto.XBRLProto;
+import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.nio.file.Paths;
@@ -16,16 +12,7 @@ import java.util.Map;
 
 public class BuilderThing {
 
-    public static void main(final String[] args) {
-        System.out.println(args[0]);
-        BuilderThing cache = new BuilderThing();
-        cache.setPaths(args[0]);
-        CIKReference master = ParseColeft.loadMaster(ParseColeft.getLines());
-//        cache.gramsToDisk(master.getMap());
-//        cache.namesToDisk(master.knownNames());
-        cache.dumpNameBuckets(cache.namesToBuckets(master.knownNames()));
-        cache.gramBucketsToDisk(cache.gramMapToBuckets(master.getMap()));
-    }
+    private static final Logger log = Logger.getLogger(BuilderThing.class);
 
     private String cachePath = null;
 
@@ -34,15 +21,11 @@ public class BuilderThing {
 
     }
 
-    private void setPaths(final String outputDir) {
+    public void setPaths(final String outputDir) {
         this.cachePath = Paths.get(outputDir, "cache").toString();
     }
 
-    private void gramsToDisk(final Map<String, Map<Integer, List<Integer>>> grams) {
-        grams.keySet().forEach((gram) -> toDisk(gram, toProto(gram, grams.get(gram))));
-    }
-
-    private Map<String, Map<String, Map<Integer, List<Integer>>>> gramMapToBuckets(final Map<String, Map<Integer, List<Integer>>> grams) {
+    public Map<String, Map<String, Map<Integer, List<Integer>>>> gramMapToBuckets(final Map<String, Map<Integer, List<Integer>>> grams) {
         final Map<String, Map<String, Map<Integer, List<Integer>>>> buckets = new HashMap<>();
         grams.entrySet().forEach((entry) -> {
             final String gram = entry.getKey();
@@ -53,7 +36,21 @@ public class BuilderThing {
         return buckets;
     }
 
-    private void gramBucketsToDisk(final Map<String, Map<String, Map<Integer, List<Integer>>>> buckets) {
+    public void clearCache() {
+        log.info("deleting files in: " + this.cachePath);
+        final File[] files = new File(this.cachePath).listFiles();
+        if(files!=null) { //some JVMs return null for empty dirs
+            for(File f: files) {
+                if(f.isDirectory()) {
+                    log.warn("not deleting cache sub directory: " + f.getName());
+                } else {
+                    f.delete();
+                }
+            }
+        }
+    }
+
+    public void gramBucketsToDisk(final Map<String, Map<String, Map<Integer, List<Integer>>>> buckets) {
         buckets.forEach((bucket, gramCache) -> {
             final String outputPath = Paths.get(this.cachePath, bucket).toString();
             protoToDisk(outputPath, toGramBucket(gramCache));
@@ -77,11 +74,6 @@ public class BuilderThing {
         }
     }
 
-    private void toDisk(final String gram, final XBRLProto.GramCache cache) {
-        final String path = Paths.get(this.cachePath, Common.gramPath(gram)).toString();
-        protoToDisk(path, cache);
-    }
-
     private XBRLProto.GramCache toProto(final String gram, final Map<Integer, List<Integer>> scores) {
         final XBRLProto.GramCache.Builder cache = XBRLProto.GramCache.newBuilder();
         cache.setGram(gram);
@@ -95,7 +87,7 @@ public class BuilderThing {
         return cache.build();
     }
 
-    protected Map<String, Map<Integer, List<String>>> namesToBuckets(final Map<Integer, List<String>> knownNames) {
+    public Map<String, Map<Integer, List<String>>> namesToBuckets(final Map<Integer, List<String>> knownNames) {
         final Map<String, Map<Integer, List<String>>> buckets = new HashMap<>();
         knownNames.entrySet().forEach((entry) -> {
             final String key = Common.bucketKey(entry.getKey());
@@ -107,7 +99,7 @@ public class BuilderThing {
         return buckets;
     }
 
-    private void dumpNameBuckets(final Map<String, Map<Integer, List<String>>> buckets) {
+    public void dumpNameBuckets(final Map<String, Map<Integer, List<String>>> buckets) {
         buckets.entrySet().forEach((entry) -> {
             final String bucket = entry.getKey();
             final String outputPath = Paths.get(this.cachePath, bucket).toString();
@@ -116,7 +108,7 @@ public class BuilderThing {
         });
     }
 
-    protected XBRLProto.NameCache toNameCache(final Map<Integer, List<String>> knownNames) {
+    private XBRLProto.NameCache toNameCache(final Map<Integer, List<String>> knownNames) {
         final XBRLProto.NameCache.Builder builder = XBRLProto.NameCache.newBuilder();
         knownNames.entrySet().forEach(entry -> builder.putNameMap(entry.getKey(), toNames(entry.getValue())));
         return builder.build();
