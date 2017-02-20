@@ -10,8 +10,15 @@ import lol.driveways.xbrl.model.LambdaResult;
 
 import java.util.ArrayList;
 import java.util.List;
+//import java.util.logging.Logger;
+
+//import org.apache.logging.log4j.Logger;
+import org.apache.log4j.Logger;
 
 public class CIKLookup implements RequestHandler<LambdaQuery, LambdaResponse> {
+
+    private static final Logger log = Logger.getLogger(CIKLookup.class);
+
     public static void main(final String[] args) {
         CIKLookup lookup = new CIKLookup();
         LambdaQuery query = new LambdaQuery();
@@ -32,7 +39,9 @@ public class CIKLookup implements RequestHandler<LambdaQuery, LambdaResponse> {
 //    }
 
     @Override
-    public LambdaResponse handleRequest(LambdaQuery input, Context context) {
+    public LambdaResponse handleRequest(final LambdaQuery input, final Context context) {
+        log.info("request start");
+//        log.info("query: " + input.getQuery() + ", limit: " + input.getLimit());
         final Search search = new GramSearch();
         final List<LambdaResult> results = new ArrayList<>();
         search.search(input.getQuery(), input.getLimit()).forEach((cikScore) -> {
@@ -42,10 +51,11 @@ public class CIKLookup implements RequestHandler<LambdaQuery, LambdaResponse> {
             result.setScore(cikScore.getScore());
             results.add(result);
             String name = search.knownNames(cikScore.getCik()).getName();
-            System.out.println(cikScore.getScore() + " " + name);
+            log.debug("result: " + cikScore.getScore() + " " + name);
         });
         final LambdaResponse lambdaResponse = new LambdaResponse();
         lambdaResponse.setResults(results);
+        log.info("request done");
         return lambdaResponse;
     }
 }

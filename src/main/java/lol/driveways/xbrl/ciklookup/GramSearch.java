@@ -4,6 +4,7 @@ import lol.driveways.xbrl.cache.LoaderThing;
 import lol.driveways.xbrl.model.CIKReference;
 import lol.driveways.xbrl.model.CIKScore;
 import lol.driveways.xbrl.proto.XBRLProto;
+import org.apache.log4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,6 +17,8 @@ import static java.lang.System.out;
 
 public class GramSearch implements Search {
 
+    private static final Logger log = Logger.getLogger(GramSearch.class);
+
     private final LoaderThing loaderThing;
     private XBRLProto.NameCache nameCache = null;
     private Long prev;
@@ -23,16 +26,15 @@ public class GramSearch implements Search {
     private Long startTime;
 
     public GramSearch() {
+        log.debug("load");
         startTime = System.currentTimeMillis();
         prev = startTime;
-        bench("load search");
         loaderThing = new LoaderThing();
-        bench("got gram cache");
     }
 
     private synchronized void bench(final String msg) {
         final Long now = System.currentTimeMillis();
-        out.println(String.format("%d %d %s", now - startTime, now - prev, msg));
+        log.info(String.format("%d %d %s", now - startTime, now - prev, msg));
         prev = now;
     }
 
@@ -47,10 +49,9 @@ public class GramSearch implements Search {
 
     @Override
     public List<CIKScore> search(final String query, final Long numResults) {
-        bench("start");
+        log.info("query: " + query + " limit: " + numResults);
         final CIKReference searchReference = new CIKReference(query, 0);
         final ConcurrentHashMap<Integer, Integer> scoreMap = new ConcurrentHashMap<>();
-        bench("map initialized");
         final Map<String, Integer> gramFrequency = new HashMap<>();
         final Stream<String> grams = searchReference.nGrams();
         bench("got grams");
